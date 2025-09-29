@@ -7,116 +7,125 @@ use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
-use illuminate\Support\Str;
+use Illuminate\Support\Str;
+use App\Http\Requests\StoreRhUserRequest;
+use App\Http\Requests\UpdateRhUserRequest;
 
 class RhUserController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $colaborators = User::with('detail')->where('role', 'rh')->orderBy('name', 'asc')->get(); // inclui os dados da tabela detalhes
-        return view('colaborators.rh-users', compact('colaborators'));
+        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
+        $colaborators = User::with("detail")->where("role", "rh")->orderBy("name", "asc")->get();
+        return view("colaborators.rh-users", compact("colaborators"));
     }
 
-    public function newRhColaborator()
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
         $departments = Department::all();
-        return view('colaborators.add-rh-user', compact('departments'));
+        return view("colaborators.add-rh-user", compact("departments"));
     }
 
-    public function createRhColaborator(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreRhUserRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        // A autorização e validação são tratadas pelo StoreRhUserRequest
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email', // tabela dos users na coluna email
-            'select_department' => 'required|exists:departments,id', // tem que existir na tabela departments e na coluna id (nunca pode ter espaços entre os argumentos)
-            'address' => 'required|string|max:255',
-            'zip_code' => 'required|string|max:10',
-            'city' => 'required|string|max:50',
-            'phone' => 'required|string|max:50',
-            'salary' => 'required|decimal:2',
-            'admission_date' => 'required|date_format:Y-m-d'
-        ]);
-
-        // validar se o department_id = 2 (RH)
         if ($request->select_department != 2) {
-            return redirect()->route('home');
+            return redirect()->route("rh-users.index")->with("error", "O departamento selecionado não é válido para usuários RH.");
         }
 
         $token = Str::random(60);
 
-        // gravar os dados do usuário
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->confirmation_token = $token;
-        $user->role = 'rh';
+        $user->role = "rh";
         $user->department_id = $request->select_department;
-        $user->permissions = '["rh"]';
+        $user->permissions = "["rh"]";
         $user->save();
 
-        // // gravar os dados do detalhe do usuário
         $user->detail()->create([
-            'address' => $request->address,
-            'zip_code' => $request->zip_code,
-            'city' => $request->city,
-            'phone' => $request->phone,
-            'salary' => $request->salary,
-            'admission_date' => $request->admission_date
+            "address" => $request->address,
+            "zip_code" => $request->zip_code,
+            "city" => $request->city,
+            "phone" => $request->phone,
+            "salary" => $request->salary,
+            "admission_date" => $request->admission_date
         ]);
 
-        // enviar o email
-        // Password::sendResetLink(['email' => $user->email]); // este código funciona para enviar email - já testei
+        Mail::to($user->email)->send(new ConfirmAccountEmail(route("confirm-account", $token)));
 
-        Mail::to($user->email)->send(new ConfirmAccountEmail(route('confirm-account', $token)));
-
-        return redirect()->route('colaborators.rh-users')->with('success', 'Colaborador criado com sucesso!');
+        return redirect()->route("rh-users.index")->with("success", "Colaborador criado com sucesso!");
     }
 
-    public function editRhColaborator($id)
+    /**
+     * Display the specified resource.
+     */
+    public function show(User $rh_user)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $colaborator = User::with('detail')->where('role', 'rh')->findOrFail(Crypt::decryptString($id));
-        return view('colaborators.edit-rh-user', compact('colaborator'));
+        // Este método não é usado na implementação original, mas pode ser implementado se necessário.
+        abort(404); // Ou redirecionar para a lista.
     }
 
-    public function updateRhColaborator(Request $request)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(User $rh_user)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
+        // O parâmetro de rota é "rh_user" devido ao model binding implícito e ao prefixo de rota "rh-users"
+        // Certifique-se de que o usuário tem a role "rh"
+        if ($rh_user->role !== "rh") {
+            return redirect()->route("rh-users.index")->with("error", "Usuário não é um colaborador RH.");
+        }
+        $colaborator = $rh_user->load("detail"); // Carrega os detalhes do usuário
+        return view("colaborators.edit-rh-user", compact("colaborator"));
+    }
 
-        $request->validate([
-            'user_id' => 'required|exists:users,id', // verifica se existe na tabela users no campo id
-            'salary' => 'required|decimal:2',
-            'admission_date' => 'required|date_format:Y-m-d'
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateRhUserRequest $request, User $rh_user)
+    {
+        // A autorização e validação são tratadas pelo UpdateRhUserRequest
+        if ($rh_user->role !== "rh") {
+            return redirect()->route("rh-users.index")->with("error", "Usuário não é um colaborador RH.");
+        }
+
+        $rh_user->detail->update([
+            "salary" => $request->salary,
+            "admission_date" => $request->admission_date
         ]);
 
-        $user = User::findOrFail($request->user_id);
-
-        $user->detail->update([
-            'salary' => $request->salary,
-            'admission_date' => $request->admission_date
-        ]);
-
-        return redirect()->route('colaborators.rh-users');
+        return redirect()->route("rh-users.index")->with("success", "Colaborador atualizado com sucesso!");
     }
 
-    public function deleteRhColaborator($id)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(User $rh_user)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $colaborator = User::findOrFail(Crypt::decryptString($id));
-        return view('colaborators.delete-colaborator-confirm', compact('colaborator')); // view de confirmação
-    }
+        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
 
-    public function deleteRhColaboratorConfirm($id)
-    {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $colaborator = User::findOrFail(Crypt::decryptString($id));
-        $colaborator->delete();
-        return redirect()->route('colaborators.rh-users');
+        if ($rh_user->role !== "rh") {
+            return redirect()->route("rh-users.index")->with("error", "Usuário não é um colaborador RH.");
+        }
+
+        $rh_user->delete();
+
+        return redirect()->route("rh-users.index")->with("success", "Colaborador excluído com sucesso!");
     }
 }
+

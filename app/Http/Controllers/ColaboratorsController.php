@@ -19,53 +19,43 @@ class ColaboratorsController extends Controller
         });
     }
 
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
-        $colaborators = User::with(\'detail\', \'department\')->where(\'role\', \'< >\', \'admin\')->get();
-        return view(\'colaborators.admin-all-colaborators\', compact(\'colaborators\'));
+        $colaborators = User::with('detail', 'department')->where('role', '<>', 'admin')->get();
+        return view('colaborators.admin-all-colaborators', compact('colaborators'));
     }
 
-    public function details($id)
+    /**
+     * Display the specified resource.
+     */
+    public function show(User $colaborator)
     {
-        // A permissão \'rh\' não está sendo tratada pelo middleware global, então a mantemos aqui.
-
-
+        // A permissão 'rh' não está sendo tratada pelo middleware global, então a mantemos aqui.
         // verificar se o id é o mesmo do usuário // nao pode mostrar os seus próprios detalhes
-        if (Auth::user()->id === $id) {
-            return redirect()->route(\'home\');
+        if (Auth::user()->id === $colaborator->id) {
+            return redirect()->route('home');
         }
 
-        $colaborator = User::with(\'detail\', \'department\')->where(\'id\', $id)->first();
+        $colaborator->load('detail', 'department');
 
-        return view(\'colaborators.show-details\', compact(\'colaborator\'));
+        return view('colaborators.show-details', compact('colaborator'));
     }
 
-    public function delete($id)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(User $colaborator)
     {
-
-
-        if (Auth::user()->id === $id) {
-            return redirect()->route(\'home\');
+        if (Auth::user()->id === $colaborator->id) {
+            return redirect()->route('home')->with('error', 'Você não pode excluir seu próprio perfil.');
         }
-
-        $colaborator = User::findOrFail(Crypt::decryptString($id));
-
-        return view(\'colaborators.confirm_delete\', compact(\'colaborator\')); // view de confirmação
-    }
-
-    public function deleteConfirm($id)
-    {
-
-
-        if (Auth::user()->id === $id) {
-            return redirect()->route(\'home\');
-        }
-
-        $colaborator = User::findOrFail(Crypt::decryptString($id));
 
         $colaborator->delete();
 
-        return redirect()->route(\'colaborators.all\');
+        return redirect()->route('colaborators.all')->with('success', 'Colaborador excluído com sucesso!');
     }
 }
 
