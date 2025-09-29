@@ -16,10 +16,19 @@ use App\Models\Morte;
 
 class LotesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->can('admin')) {
+                abort(403, 'Você não tem permissão para acessar esta página!');
+            }
+            return $next($request);
+        });
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $lotes = Lote::with(['mortes', 'nucleo', 'galpoes'])->get();
 
         $totais = Lote::selectRaw('SUM(qtde_aves) as total_aves, SUM(qtde_machos) as total_machos')->first();
@@ -37,8 +46,6 @@ class LotesController extends Controller
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'programa_vacinacao' => ParamProgramaVacinacao::select('id', 'descricao')->get(),
             'linhagens' => ParamLinhagem::select('id', 'descricao')->get(),
@@ -50,8 +57,6 @@ class LotesController extends Controller
 
     public function store(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         // $request->validate([
         //     'nome' => 'required|min:3|max:30'
         // ]);
@@ -69,7 +74,6 @@ class LotesController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $lote = Lote::with('mortes', 'nucleo', 'coletas')->findOrFail(Crypt::decryptString($id));
 
         $main = new MainController();
@@ -84,15 +88,12 @@ class LotesController extends Controller
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $lote = Lote::findOrFail(Crypt::decryptString($id));
         return view('lotes.editar', compact('lote'));
     }
 
     public function update(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $validated = $request->validate([
             'id' => 'required|exists:lotes,id',
             'nome' => 'required|string|min:3|max:30'
@@ -109,8 +110,6 @@ class LotesController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $decryptedId = Crypt::decryptString($id);
 
         $dados = [
@@ -123,8 +122,6 @@ class LotesController extends Controller
 
     public function destroy($id)
     {
-
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $lote = Lote::findOrFail(Crypt::decryptString($id));
 
         if ($lote->mortes()->exists()) {
@@ -145,3 +142,4 @@ class LotesController extends Controller
         return Lote::where('nucleo_id', $nucleo_id)->max('num_lote') + 1;
     }
 }
+

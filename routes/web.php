@@ -73,7 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/departments/new-department', [DepartmentController::class, 'newDepartment'])->name('departments.new-department');
     Route::post('/departments/create-department', [DepartmentController::class, 'createDepartment'])->name('departments.create-department');
     Route::get('/departments/edit-department/{id}', [DepartmentController::class, 'editDepartment'])->name('departments.edit-department');
-    Route::post('/departments/update-department', [DepartmentController::class, 'updateDepartment'])->name('departments.uptate-department');
+        Route::post('/departments/update-department', [DepartmentController::class, 'updateDepartment'])->name('departments.update-department');
     Route::get('/departments/delete-department/{id}', [DepartmentController::class, 'deleteDepartment'])->name('departments.delete-department');
     Route::get('/departments/delete-department-confirm/{id}', [DepartmentController::class, 'deleteDepartmentConfirm'])->name('departments.delete-department-confirm');
 
@@ -82,20 +82,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/rh-users/new-colaborator', [RhUserController::class, 'newRhColaborator'])->name('colaborators.rh.new-colaborator');
     Route::post('/rh-users/create-colaborator', [RhUserController::class, 'createRhColaborator'])->name('colaborators.rh.create-colaborator');
     Route::get('/rh-users/edit-colaborator/{id}', [RhUserController::class, 'editRhColaborator'])->name('colaborators.rh.edit-colaborator');
-    Route::post('/rh-users/update-colaborator', [RhUserController::class, 'updateRhColaborator'])->name('colaborators.rh.uptate-colaborator');
+        Route::post("/rh-users/update-colaborator", [RhUserController::class, "updateRhColaborator"])->name("colaborators.rh.update-colaborator");
     Route::get('/rh-users/delete-colaborator/{id}', [RhUserController::class, 'deleteRhColaborator'])->name('colaborators.rh.delete-colaborator');
     Route::get('/rh-users/delete-colaborator-confirm/{id}', [RhUserController::class, 'deleteRhColaboratorConfirm'])->name('colaborators.rh.delete-colaborator-confirm');
 
     Route::get('/rh-users/management', [RhManagementController::class, 'index'])->name('rh.management');
 
-    //REMOVER - APENAS TESTE
-    Route::get('funcionarios', [FuncionariosController::class, 'index'])->name('funcionarios.index');
-    Route::get('/funcionarios/create', [FuncionariosController::class, 'create'])->name('funcionarios.create');
-    Route::post('/funcionarios/store', [FuncionariosController::class, 'store'])->name('funcionarios.store');
-    Route::get('/funcionarios/show/{id}', [FuncionariosController::class, 'show'])->name('funcionarios.show');
-    Route::get('/funcionarios/edit/{id}', [FuncionariosController::class, 'edit'])->name('funcionarios.edit');
-    Route::post('/funcionarios/update/{id}', [FuncionariosController::class, 'update'])->name('funcionarios.update');
-    Route::get('/funcionarios/destroy/{id}', [FuncionariosController::class, 'destroy'])->name('funcionarios.destroy');
+
 
     // Rotas para Núcleos
     Route::get('/nucleos', [NucleosController::class, 'index'])->name('nucleos.index');

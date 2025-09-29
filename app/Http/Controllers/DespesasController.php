@@ -14,10 +14,19 @@ use Illuminate\Support\Facades\Crypt;
 
 class DespesasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->can('admin')) {
+                abort(403, 'Você não tem permissão para acessar esta página!');
+            }
+            return $next($request);
+        });
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'despesas' => Despesa::all()
         ];
@@ -27,8 +36,6 @@ class DespesasController extends Controller
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'tipo_despesa' => ParamTipoDespesa::orderBy('descricao')->get(),
             'natureza_despesa' => ParamNaturezaDespesa::orderBy('descricao')->get(),
@@ -44,8 +51,6 @@ class DespesasController extends Controller
 
     public function store(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         // $request->validate([
         //     'data_vencimento' => 'required',
         //     'vlr_cobranca' => 'required',
@@ -74,22 +79,18 @@ class DespesasController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $despesa = Despesa::findOrFail(Crypt::decryptString($id));
         return view('despesas.detalhes', compact('despesa'));
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $despesa = Despesa::findOrFail(Crypt::decryptString($id));
         return view('despesas.editar', compact('despesa'));
     }
 
     public function update(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         // $request->validate([
         //     'nome' => 'required|min:3|max:30'
         // ]);
@@ -105,16 +106,15 @@ class DespesasController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $despesa = Despesa::findOrFail(Crypt::decryptString($id));
         return view('despesas.confirmar', compact('despesa'));
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $despesa = Despesa::findOrFail(Crypt::decryptString($id));
         $despesa->delete();
         return redirect()->route('despesas.index');
     }
 }
+

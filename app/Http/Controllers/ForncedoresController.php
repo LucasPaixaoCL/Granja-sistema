@@ -9,23 +9,30 @@ use Illuminate\Support\Facades\Crypt;
 
 class ForncedoresController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->can('admin')) {
+                abort(403, 'Você não tem permissão para acessar esta página!');
+            }
+            return $next($request);
+        });
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $fornecedores = Forncedor::all();
         return view('fornecedores.listar', compact('fornecedores'));
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         return view('fornecedores.adicionar');
     }
 
     public function store(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $request->validate([
             'nome' => 'required|min:3|max:30'
         ]);
@@ -41,8 +48,6 @@ class ForncedoresController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'fornecedor' => Forncedor::findOrFail(Crypt::decryptString($id))
         ];
@@ -52,8 +57,6 @@ class ForncedoresController extends Controller
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'fornecedor' => Forncedor::findOrFail(Crypt::decryptString($id))
         ];
@@ -63,8 +66,6 @@ class ForncedoresController extends Controller
 
     public function update(Request $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $request->validate([
             'nome' => 'required|min:3|max:30'
         ]);
@@ -80,8 +81,6 @@ class ForncedoresController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $dados = [
             'fornecedor' => Forncedor::findOrFail(Crypt::decryptString($id))
         ];
@@ -91,9 +90,9 @@ class ForncedoresController extends Controller
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $fornecedor = Forncedor::findOrFail(Crypt::decryptString($id));
         $fornecedor->delete();
         return redirect()->route('fornecedores.index');
     }
 }
+
