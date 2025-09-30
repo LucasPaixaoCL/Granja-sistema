@@ -1,0 +1,14 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5 # Nível de análise, de 0 (mais baixo) a 9 (mais alto)
+    paths:
+        - app/
+
+    excludePaths:
+        # Excluir arquivos que não existem no projeto ou que não são relevantes para a análise de código
+        - app/Models/ParamVacina.php(?)
+        - app/Http/Middleware/*(?)
+        - app/Http/Controllers/Auth/*(?)
+

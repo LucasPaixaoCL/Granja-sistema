@@ -3,16 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lote;
+use App\Models\Morte;
 use App\Models\Nucleo;
 use App\Models\ParamLinhagem;
 use App\Models\ParamProgramaVacinacao;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
-use App\Http\Controllers\MainController;
-use App\Models\FormaPgto;
-use App\Models\Morte;
 
 class LotesController extends Controller
 {
@@ -20,9 +17,10 @@ class LotesController extends Controller
     {
         $this->middleware('auth');
         $this->middleware(function ($request, $next) {
-            if (!Auth::user()->can('admin')) {
+            if (! Auth::user()->can('admin')) {
                 abort(403, 'Você não tem permissão para acessar esta página!');
             }
+
             return $next($request);
         });
     }
@@ -38,10 +36,10 @@ class LotesController extends Controller
             'lotes' => $lotes,
             'total_aves' => $totais->total_aves,
             'total_machos' => $totais->total_machos,
-            'total_mortes' => $total_mortes
+            'total_mortes' => $total_mortes,
         ];
 
-        return view('lotes.listar', compact('dados'));
+        return view('lotes.listar', ['dados' => $dados]);
     }
 
     public function create()
@@ -49,10 +47,10 @@ class LotesController extends Controller
         $dados = [
             'programa_vacinacao' => ParamProgramaVacinacao::select('id', 'descricao')->get(),
             'linhagens' => ParamLinhagem::select('id', 'descricao')->get(),
-            'nucleos' => Nucleo::select('id', 'descricao')->get()
+            'nucleos' => Nucleo::select('id', 'descricao')->get(),
         ];
 
-        return view('lotes.adicionar', compact('dados'));
+        return view('lotes.adicionar', ['dados' => $dados]);
     }
 
     public function store(Request $request)
@@ -61,7 +59,7 @@ class LotesController extends Controller
         //     'nome' => 'required|min:3|max:30'
         // ]);
 
-        $lote = new Lote();
+        $lote = new Lote;
         $lote->nucleo_id = $request->nucleo;
         $lote->num_lote = $this->buscaMaiorLote($request->nucleo);
         $lote->data_lote = $request->data_lote;
@@ -76,33 +74,34 @@ class LotesController extends Controller
     {
         $lote = Lote::with('mortes', 'nucleo', 'coletas')->findOrFail(Crypt::decryptString($id));
 
-        $main = new MainController();
+        $main = new MainController;
 
         $dados = [
-            'lote'  => $lote,
-            'semana' => $main->calcularSemana($lote->data_lote, now())
+            'lote' => $lote,
+            'semana' => $main->calcularSemana($lote->data_lote, now()),
         ];
 
-        return view('lotes.detalhes', compact('dados'));
+        return view('lotes.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
         $lote = Lote::findOrFail(Crypt::decryptString($id));
-        return view('lotes.editar', compact('lote'));
+
+        return view('lotes.editar', ['lote' => $lote]);
     }
 
     public function update(Request $request)
     {
         $validated = $request->validate([
             'id' => 'required|exists:lotes,id',
-            'nome' => 'required|string|min:3|max:30'
+            'nome' => 'required|string|min:3|max:30',
         ]);
 
-        $lote = Lote::select('id')->findOrFail($validated['id']); 
+        $lote = Lote::select('id')->findOrFail($validated['id']);
 
         $lote->update([
-            'nome' => $validated['nome']
+            'nome' => $validated['nome'],
         ]);
 
         return redirect()->route('lotes.index')->with('success', 'Gravado com sucesso!!!');
@@ -113,11 +112,11 @@ class LotesController extends Controller
         $decryptedId = Crypt::decryptString($id);
 
         $dados = [
-            'lote' => Lote::select('id', 'qtde_aves', 'qtde_machos', 'data_entrada') 
-                ->findOrFail($decryptedId)
+            'lote' => Lote::select('id', 'qtde_aves', 'qtde_machos', 'data_entrada')
+                ->findOrFail($decryptedId),
         ];
 
-        return view('lotes.confirmar', compact('dados'));
+        return view('lotes.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
@@ -137,9 +136,8 @@ class LotesController extends Controller
         return redirect()->route('lotes.index');
     }
 
-    public function buscaMaiorLote($nucleo_id)
+    public function buscaMaiorLote($nucleo_id): int|float
     {
         return Lote::where('nucleo_id', $nucleo_id)->max('num_lote') + 1;
     }
 }
-

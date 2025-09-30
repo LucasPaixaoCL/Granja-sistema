@@ -2,39 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamNaturezaDespesaRequest;
+use App\Http\Requests\UpdateParamNaturezaDespesaRequest;
 use App\Models\ParamNaturezaDespesa;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamNaturezaDespesaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamNaturezaDespesa::class);
 
         $dados = [
-            'natureza_despeza' => ParamNaturezaDespesa::all()
+            'natureza_despeza' => ParamNaturezaDespesa::all(),
         ];
 
-        return view('parametros.natureza_despesa.listar', compact('dados'));
+        return view('parametros.natureza_despesa.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamNaturezaDespesa::class);
+
         return view('parametros.natureza_despesa.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamNaturezaDespesaRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamNaturezaDespesa::class);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $natureza_despeza = new ParamNaturezaDespesa();
+        $natureza_despeza = new ParamNaturezaDespesa;
         $natureza_despeza->descricao = $request->descricao;
         $natureza_despeza->save();
 
@@ -43,38 +45,34 @@ class ParamNaturezaDespesaController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $natureza_despeza = ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $natureza_despeza);
 
         $dados = [
-            'natureza_despeza' => ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id))
+            'natureza_despeza' => $natureza_despeza,
         ];
 
-        return view('parametros.natureza_despesa.detalhes', compact('dados'));
+        return view('parametros.natureza_despesa.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $natureza_despeza = ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id));
+        $this->authorize('update', $natureza_despeza);
 
         $dados = [
-            'natureza_despeza' => ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id))
+            'natureza_despeza' => $natureza_despeza,
         ];
 
-        return view('parametros.natureza_despesa.editar', compact('natureza_despeza'));
+        return view('parametros.natureza_despesa.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamNaturezaDespesaRequest $request, ParamNaturezaDespesa $paramNaturezaDespesa)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramNaturezaDespesa);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $natureza_despeza = ParamNaturezaDespesa::findOrFail($request->id);
-
-        $natureza_despeza->update([
-            'descricao' => $request->descricao
+        $paramNaturezaDespesa->update([
+            'descricao' => $request->descricao,
         ]);
 
         return redirect()->route('param.natureza.despesa.index')->with('success', 'Gravado com sucesso!!!');
@@ -82,20 +80,22 @@ class ParamNaturezaDespesaController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $natureza_despeza = ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $natureza_despeza);
 
         $dados = [
-            'natureza_despeza' => ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id))
+            'natureza_despeza' => $natureza_despeza,
         ];
 
-        return view('parametros.natureza_despesa.confirmar', compact('dados'));
+        return view('parametros.natureza_despesa.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $natureza_despeza = ParamNaturezaDespesa::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $natureza_despeza);
         $natureza_despeza->delete();
+
         return redirect()->route('param.natureza.despesa.index');
     }
 }

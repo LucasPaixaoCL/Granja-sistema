@@ -2,35 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamCategoriaDespesaRequest;
+use App\Http\Requests\UpdateParamCategoriaDespesaRequest;
 use App\Models\ParamCategoriaDespesa;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamCategoriaDespesaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamCategoriaDespesa::class);
         $categorias_despesa = ParamCategoriaDespesa::all();
-        return view('parametros.categoria_despesa.listar', compact('categorias_despesa'));
+
+        return view('parametros.categoria_despesa.listar', ['categorias_despesa' => $categorias_despesa]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamCategoriaDespesa::class);
+
         return view('parametros.categoria_despesa.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamCategoriaDespesaRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamCategoriaDespesa::class);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $categoria_despesa = new ParamCategoriaDespesa();
+        $categoria_despesa = new ParamCategoriaDespesa;
         $categoria_despesa->descricao = $request->descricao;
         $categoria_despesa->save();
 
@@ -39,30 +42,26 @@ class ParamCategoriaDespesaController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $categoria_despesa = ParamCategoriaDespesa::findOrFail(Crypt::decryptString($id));
-        return view('parametros.categoria_despesa.detalhes', compact('categoria_despesa'));
+        $this->authorize('view', $categoria_despesa);
+
+        return view('parametros.categoria_despesa.detalhes', ['categoria_despesa' => $categoria_despesa]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $categoria_despesa = ParamCategoriaDespesa::findOrFail(Crypt::decryptString($id));
-        return view('parametros.categoria_despesa.editar', compact('categoria_despesa'));
+        $this->authorize('update', $categoria_despesa);
+
+        return view('parametros.categoria_despesa.editar', ['categoria_despesa' => $categoria_despesa]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamCategoriaDespesaRequest $request, ParamCategoriaDespesa $paramCategoriaDespesa)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramCategoriaDespesa);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $categoria_despesa = ParamCategoriaDespesa::findOrFail($request->id);
-
-        $categoria_despesa->update([
-            'descricao' => $request->descricao
+        $paramCategoriaDespesa->update([
+            'descricao' => $request->descricao,
         ]);
 
         return redirect()->route('param.categoria.despesa.index')->with('success', 'Gravado com sucesso!!!');
@@ -70,16 +69,18 @@ class ParamCategoriaDespesaController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $categoria_despesa = ParamCategoriaDespesa::findOrFail(Crypt::decryptString($id));
-        return view('parametros.categoria_despesa.confirmar', compact('categoria_despesa'));
+        $this->authorize('view', $categoria_despesa);
+
+        return view('parametros.categoria_despesa.confirmar', ['categoria_despesa' => $categoria_despesa]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $categoria_despesa = ParamCategoriaDespesa::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $categoria_despesa);
         $categoria_despesa->delete();
+
         return redirect()->route('param.categoria.despesa.index');
     }
 }

@@ -2,34 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamProgramaLuzRequest;
+use App\Http\Requests\UpdateParamProgramaLuzRequest;
 use App\Models\ParamProgramaLuz;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 
 class ParamProgramaLuzController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamProgramaLuz::class);
         $results = ParamProgramaLuz::all();
-        return view('parametros.programa_luz.listar', compact('results'));
+
+        return view('parametros.programa_luz.listar', ['results' => $results]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamProgramaLuz::class);
+
         return view('parametros.programa_luz.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamProgramaLuzRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamProgramaLuz::class);
 
-        $request->validate([
-            'nome' => 'required|min:3|max:30'
-        ]);
-
-        $vacina = new ParamProgramaLuz();
+        $vacina = new ParamProgramaLuz;
+        $vacina->nome = $request->nome;
         $vacina->save();
 
         return redirect()->route('parametros.programa_luz.index')->with('success', 'Gravado com sucesso!!!');
@@ -37,29 +42,26 @@ class ParamProgramaLuzController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = ParamProgramaLuz::findOrFail(Crypt::decryptString($id));
-        return view('parametros.programa_luz.detalhes', compact('vacina'));    }
+        $this->authorize('view', $vacina);
+
+        return view('parametros.programa_luz.detalhes', ['vacina' => $vacina]);
+    }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = ParamProgramaLuz::findOrFail(Crypt::decryptString($id));
-        return view('parametros.programa_luz.editar', compact('vacina'));
+        $this->authorize('update', $vacina);
+
+        return view('parametros.programa_luz.editar', ['vacina' => $vacina]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamProgramaLuzRequest $request, ParamProgramaLuz $paramProgramaLuz)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramProgramaLuz);
 
-        $request->validate([
-            'nome' => 'required|min:3|max:30'
-        ]);
-
-        $vacina = ParamProgramaLuz::findOrFail($request->id);
-
-        $vacina->update([
-            'nome' => $request->nome
+        $paramProgramaLuz->update([
+            'nome' => $request->nome,
         ]);
 
         return redirect()->route('parametros.programa_luz.index')->with('success', 'Gravado com sucesso!!!');
@@ -67,16 +69,18 @@ class ParamProgramaLuzController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = ParamProgramaLuz::findOrFail(Crypt::decryptString($id));
-        return view('parametros.programa_luz.confirm', compact('vacina'));
+        $this->authorize('view', $vacina);
+
+        return view('parametros.programa_luz.confirm', ['vacina' => $vacina]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = ParamProgramaLuz::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $vacina);
         $vacina->delete();
+
         return redirect()->route('parametros.programa_luz.index');
     }
 }

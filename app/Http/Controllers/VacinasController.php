@@ -2,23 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreVacinaRequest;
+use App\Http\Requests\UpdateVacinaRequest;
 use App\Models\Vacina;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 class VacinasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', Vacina::class);
 
         $dados = [
             'vacinas' => DB::table('param_detalhes_programa_vacinacao as pdpv')
                 ->join('param_programa_vacinacao as ppv', 'pdpv.param_programa_vacinacao_id', '=', 'ppv.id')
                 ->leftJoin('vacinas as v', 'v.param_programa_vacinacao_id', '=', 'pdpv.id')
-                ->leftJoin('lotes as l', function ($join) {
+                ->leftJoin('lotes as l', function ($join): void {
                     $join->on('l.id', '=', 'v.lote_id')
                         ->where('l.id', '=', 1);
                 })
@@ -32,33 +37,28 @@ class VacinasController extends Controller
                     'pva.descricao',
                     'l.data_lote',
                     'v.data_prevista',
-                    'v.data_realizada'
+                    'v.data_realizada',
                 ])
                 ->limit(100)
-                ->get()
+                ->get(),
         ];
 
-        return view('vacinas.listar', compact('dados'));
+        return view('vacinas.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
-        // incluir o created_at
+        $this->authorize('create', Vacina::class);
 
         return view('vacinas.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreVacinaRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', Vacina::class);
 
-        $request->validate([
-            'nome' => 'required|min:3|max:30'
-        ]);
-
-        $vacina = new Vacina();
+        $vacina = new Vacina;
+        $vacina->nome = $request->nome;
         $vacina->save();
 
         return redirect()->route('vacinas.index')->with('success', 'Gravado com sucesso!!!');
@@ -66,16 +66,16 @@ class VacinasController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = Vacina::findOrFail(Crypt::decryptString($id));
-        return view('vacinas.detalhes', compact('vacina'));
+        $this->authorize('view', $vacina);
+
+        return view('vacinas.detalhes', ['vacina' => $vacina]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         $vacina = Vacina::findOrFail(Crypt::decryptString($id));
+        $this->authorize('update', $vacina);
 
         $data_prevista = $vacina->data_prevista;
         $data_realizada = $vacina->data_realizada;
@@ -83,25 +83,19 @@ class VacinasController extends Controller
         $dados = [
             'id' => $id,
             'data_prevista' => $data_prevista,
-            'data_realizada' => $data_realizada
+            'data_realizada' => $data_realizada,
         ];
 
-        return view('vacinas.editar', compact('dados'));
+        return view('vacinas.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateVacinaRequest $request, Vacina $vacina)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
-        $request->validate([
-            'data_realizada' => 'required'
-        ]);
-
-        $vacina = Vacina::findOrFail(Crypt::decryptString($request->id));
+        $this->authorize('update', $vacina);
 
         $vacina->update([
             'data_realizada' => $request->data_realizada,
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('vacinas.index')->with('success', 'Gravado com sucesso!!!');
@@ -109,16 +103,18 @@ class VacinasController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = Vacina::findOrFail(Crypt::decryptString($id));
-        return view('vacinas.confirm', compact('vacina'));
+        $this->authorize('view', $vacina);
+
+        return view('vacinas.confirm', ['vacina' => $vacina]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $vacina = Vacina::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $vacina);
         $vacina->delete();
+
         return redirect()->route('vacinas.index');
     }
 }

@@ -2,36 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamMortalidadeRequest;
+use App\Http\Requests\UpdateParamMortalidadeRequest;
 use App\Models\ParamMortalidade;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamMortalidadeController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamMortalidade::class);
         $param_mortalidade = ParamMortalidade::all();
-        return view('parametros.mortalidade.listar', compact('param_mortalidade'));
+
+        return view('parametros.mortalidade.listar', ['param_mortalidade' => $param_mortalidade]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamMortalidade::class);
+
         return view('parametros.mortalidade.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamMortalidadeRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamMortalidade::class);
 
-        $request->validate([
-            'semana' => 'required',
-            'padrao' => 'required'
-        ]);
-
-        $param_mortalidade = new ParamMortalidade();
+        $param_mortalidade = new ParamMortalidade;
         $param_mortalidade->semana = $request->semana;
         $param_mortalidade->padrao = $request->padrao;
         $param_mortalidade->save();
@@ -41,47 +43,46 @@ class ParamMortalidadeController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $param_mortalidade = ParamMortalidade::findOrFail(Crypt::decryptString($id));
-        return view('parametros.mortalidade.detalhes', compact('param_mortalidade'));
+        $this->authorize('view', $param_mortalidade);
+
+        return view('parametros.mortalidade.detalhes', ['param_mortalidade' => $param_mortalidade]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $natureza_despeza = ParamMortalidade::findOrFail(Crypt::decryptString($id));
-        return view('parametros.natureza_despesa.editar', compact('natureza_despeza'));
+        $param_mortalidade = ParamMortalidade::findOrFail(Crypt::decryptString($id));
+        $this->authorize('update', $param_mortalidade);
+
+        return view('parametros.mortalidade.editar', ['param_mortalidade' => $param_mortalidade]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamMortalidadeRequest $request, ParamMortalidade $paramMortalidade)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramMortalidade);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
+        $paramMortalidade->update([
+            'semana' => $request->semana,
+            'padrao' => $request->padrao,
         ]);
 
-        $natureza_despeza = ParamMortalidade::findOrFail($request->id);
-
-        $natureza_despeza->update([
-            'descricao' => $request->descricao
-        ]);
-
-        return redirect()->route('param.natureza.despesa.index')->with('success', 'Gravado com sucesso!!!');
+        return redirect()->route('param.mortalidade.index')->with('success', 'Gravado com sucesso!!!');
     }
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $param_mortalidade = ParamMortalidade::findOrFail(Crypt::decryptString($id));
-        return view('parametros.mortalidade.confirmar', compact('param_mortalidade'));
+        $this->authorize('view', $param_mortalidade);
+
+        return view('parametros.mortalidade.confirmar', ['param_mortalidade' => $param_mortalidade]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $param_mortalidade = ParamMortalidade::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $param_mortalidade);
         $param_mortalidade->delete();
+
         return redirect()->route('param.mortalidade.index');
     }
 }

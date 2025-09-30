@@ -2,47 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamControlePesoRequest;
+use App\Http\Requests\UpdateParamControlePesoRequest;
 use App\Models\ParamControlePeso;
 use App\Models\ParamLinhagem;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamControlePesoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamControlePeso::class);
 
         $dados = [
-            'controle_peso' => ParamControlePeso::all()
+            'controle_peso' => ParamControlePeso::all(),
         ];
-        return view('parametros.controle_peso.listar', compact('dados'));
-        
+
+        return view('parametros.controle_peso.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamControlePeso::class);
 
         $dados = [
-            'linhagens' => ParamLinhagem::all()
+            'linhagens' => ParamLinhagem::all(),
         ];
 
-        return view('parametros.controle_peso.adicionar', compact('dados'));
+        return view('parametros.controle_peso.adicionar', ['dados' => $dados]);
     }
 
-    public function store(Request $request)
+    public function store(StoreParamControlePesoRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamControlePeso::class);
 
-        $request->validate([
-            'semana' => 'required',
-            'peso_min' => 'required',
-            'peso_max' => 'required'
-        ]);
-
-        $controle_peso = new ParamControlePeso();
+        $controle_peso = new ParamControlePeso;
         $controle_peso->semana = $request->semana;
         $controle_peso->peso_min = $request->peso_min;
         $controle_peso->peso_max = $request->peso_max;
@@ -53,38 +52,36 @@ class ParamControlePesoController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $controle_peso = ParamControlePeso::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $controle_peso);
 
         $dados = [
-            'controle_peso' => ParamControlePeso::findOrFail(Crypt::decryptString($id))
+            'controle_peso' => $controle_peso,
         ];
 
-        return view('parametros.controle_peso.detalhes', compact('dados'));
+        return view('parametros.controle_peso.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $controle_peso = ParamControlePeso::findOrFail(Crypt::decryptString($id));
+        $this->authorize('update', $controle_peso);
 
         $dados = [
-            'controle_peso' => ParamControlePeso::findOrFail(Crypt::decryptString($id))
+            'controle_peso' => $controle_peso,
         ];
 
-        return view('nucleos.editar', compact('dados'));
+        return view('parametros.controle_peso.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamControlePesoRequest $request, ParamControlePeso $paramControlePeso)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramControlePeso);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $result = ParamControlePeso::findOrFail($request->id);
-
-        $result->update([
-            'descricao' => $request->descricao
+        $paramControlePeso->update([
+            'semana' => $request->semana,
+            'peso_min' => $request->peso_min,
+            'peso_max' => $request->peso_max,
         ]);
 
         return redirect()->route('param.controle.peso.index')->with('success', 'Gravado com sucesso!!!');
@@ -92,20 +89,22 @@ class ParamControlePesoController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $controle_peso = ParamControlePeso::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $controle_peso);
 
-        $dados  = [
-            'controle_peso' => ParamControlePeso::findOrFail(Crypt::decryptString($id))
+        $dados = [
+            'controle_peso' => $controle_peso,
         ];
 
-        return view('parametros.controle_peso.confirmar', compact('dados'));
+        return view('parametros.controle_peso.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-        $result = ParamControlePeso::findOrFail(Crypt::decryptString($id));
-        $result->delete();
+        $controle_peso = ParamControlePeso::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $controle_peso);
+        $controle_peso->delete();
+
         return redirect()->route('param.controle.peso.index');
     }
 }

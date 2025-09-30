@@ -2,47 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamProgramaVacinacaoRequest;
+use App\Http\Requests\UpdateParamProgramaVacinacaoRequest;
 use App\Models\ParamProgramaVacinacao;
-use App\Models\ParamVacina;
 use App\Models\ParamViaAplicacao;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamProgramaVacinacaoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamProgramaVacinacao::class);
 
         $dados = [
             'programa_vacinacao' => ParamProgramaVacinacao::all(),
-            'via_aplicacao' => $this->getParamViaAplicacao()
+            'via_aplicacao' => $this->getParamViaAplicacao(),
         ];
 
-        return view('parametros.programa_vacinacao.listar', compact('dados'));
+        return view('parametros.programa_vacinacao.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamProgramaVacinacao::class);
 
         $dados = [
-            'via_aplicacao' => $this->getParamViaAplicacao()
+            'via_aplicacao' => $this->getParamViaAplicacao(),
         ];
 
-        return view('parametros.programa_vacinacao.adicionar', compact('dados'));
+        return view('parametros.programa_vacinacao.adicionar', ['dados' => $dados]);
     }
 
-    public function store(Request $request)
+    public function store(StoreParamProgramaVacinacaoRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamProgramaVacinacao::class);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $plano_vacinacao = new ParamProgramaVacinacao();
+        $plano_vacinacao = new ParamProgramaVacinacao;
         $plano_vacinacao->descricao = $request->descricao;
         $plano_vacinacao->save();
 
@@ -51,38 +51,34 @@ class ParamProgramaVacinacaoController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $plano_vacinacao = ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $plano_vacinacao);
 
         $dados = [
-            'plano_vacinacao' => ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id))
+            'plano_vacinacao' => $plano_vacinacao,
         ];
 
-        return view('parametros.programa_vacinacao.detalhes', compact('dados'));
+        return view('parametros.programa_vacinacao.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $plano_vacinacao = ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id));
+        $this->authorize('update', $plano_vacinacao);
 
         $dados = [
-            'plano_vacinacao' => ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id))
+            'plano_vacinacao' => $plano_vacinacao,
         ];
 
-        return view('parametros.programa_vacinacao.editar', compact('dados'));
+        return view('parametros.programa_vacinacao.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamProgramaVacinacaoRequest $request, ParamProgramaVacinacao $paramProgramaVacinacao)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramProgramaVacinacao);
 
-        // $request->validate([
-        //     'nome' => 'required|min:3|max:30'
-        // ]);
-
-        $plano_vacinacao = ParamProgramaVacinacao::findOrFail($request->id);
-
-        $plano_vacinacao->update([
-            'descricao' => $request->descricao
+        $paramProgramaVacinacao->update([
+            'descricao' => $request->descricao,
         ]);
 
         return redirect()->route('param.programa.vacinacao.index')->with('success', 'Gravado com sucesso!!!');
@@ -90,20 +86,22 @@ class ParamProgramaVacinacaoController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $plano_vacinacao = ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $plano_vacinacao);
 
         $dados = [
-            'plano_vacinacao' => ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id))
+            'plano_vacinacao' => $plano_vacinacao,
         ];
 
-        return view('parametros.programa_vacinacao.confirmar', compact('dados'));
+        return view('parametros.programa_vacinacao.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $plano_vacinacao = ParamProgramaVacinacao::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $plano_vacinacao);
         $plano_vacinacao->delete();
+
         return redirect()->route('param.programa.vacinacao.index');
     }
 

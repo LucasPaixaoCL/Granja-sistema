@@ -2,37 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamConsumoRacaoRequest;
+use App\Http\Requests\UpdateParamConsumoRacaoRequest;
 use App\Models\ParamConsumoRacao;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamConsumoRacaoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamConsumoRacao::class);
         $consumo_racao = ParamConsumoRacao::all();
-        return view('parametros.consumo_racao.listar', compact('consumo_racao'));
+
+        return view('parametros.consumo_racao.listar', ['consumo_racao' => $consumo_racao]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamConsumoRacao::class);
+
         return view('parametros.consumo_racao.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamConsumoRacaoRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamConsumoRacao::class);
 
-        $request->validate([
-            'semana' => 'required',
-            'consumo_dia' => 'required',
-            'consumo_semana' => 'required',
-        ]);
-
-        $consumo = new ParamConsumoRacao();
+        $consumo = new ParamConsumoRacao;
         $consumo->semana = $request->semana;
         $consumo->consumo_dia = $request->consumo_dia;
         $consumo->consumo_semana = $request->consumo_semana;
@@ -43,33 +44,28 @@ class ParamConsumoRacaoController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $consumo = ParamConsumoRacao::findOrFail(Crypt::decryptString($id));
-        return view('parametros.consumo_racao.detalhes', compact('consumo'));    }
+        $this->authorize('view', $consumo);
+
+        return view('parametros.consumo_racao.detalhes', ['consumo' => $consumo]);
+    }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $consumo = ParamConsumoRacao::findOrFail(Crypt::decryptString($id));
-        return view('parametros.consumo_racao.editar', compact('consumo'));
+        $this->authorize('update', $consumo);
+
+        return view('parametros.consumo_racao.editar', ['consumo' => $consumo]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamConsumoRacaoRequest $request, ParamConsumoRacao $paramConsumoRacao)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramConsumoRacao);
 
-        $request->validate([
-            'semana' => 'required',
-            'consumo_dia' => 'required',
-            'consumo_semana' => 'required',
-        ]);
-
-        $consumo = ParamConsumoRacao::findOrFail($request->id);
-
-        $consumo->update([
+        $paramConsumoRacao->update([
             'semana' => $request->semana,
             'consumo_dia' => $request->consumo_dia,
-            'consumo_semana' => $request->consumo_semana
+            'consumo_semana' => $request->consumo_semana,
         ]);
 
         return redirect()->route('param.consumo.racao.index')->with('success', 'Gravado com sucesso!!!');
@@ -77,16 +73,18 @@ class ParamConsumoRacaoController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $consumo = ParamConsumoRacao::findOrFail(Crypt::decryptString($id));
-        return view('parametros.consumo_racao.confirmar', compact('consumo'));
+        $this->authorize('view', $consumo);
+
+        return view('parametros.consumo_racao.confirmar', ['consumo' => $consumo]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $consumo = ParamConsumoRacao::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $consumo);
         $consumo->delete();
+
         return redirect()->route('param.consumo.racao.index');
     }
 }

@@ -2,30 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMorteRequest;
+use App\Http\Requests\UpdateMorteRequest;
 use App\Models\Lote;
 use App\Models\Morte;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
-use App\Http\Controllers\MainController;
-use Illuminate\Validation\Rule;
 
 class MortesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(\'auth\');
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->can(\'admin\')) {
-                abort(403, \'Você não tem permissão para acessar esta página!\');
-            }
-            return $next($request);
-        });
+        $this->middleware('auth');
     }
 
     public function graficoMortes()
     {
-        $lotes = Lote::with(\'mortes\')->orderBy(\'data_morte\', \'desc\')->get();
+        $this->authorize('viewAny', Morte::class);
+
+        $lotes = Lote::with('mortes')->orderBy('data_morte', 'desc')->get();
 
         $labels = [];
         $data = [];
@@ -34,56 +28,51 @@ class MortesController extends Controller
 
         // Calcular total de mortes
         foreach ($lotes as $lote) {
-            $totalMortes += $lote->mortes->sum(\'qtde_mortes\');
+            $totalMortes += collect($lote->mortes)->sum('qtde_mortes');
         }
 
         // Preparar dados para o gráfico
         foreach ($lotes as $lote) {
-            $qtde = $lote->mortes->sum(\'qtde_mortes\');
+            $qtde = collect($lote->mortes)->sum('qtde_mortes');
             if ($qtde > 0) {
-                $labels[] = \'Lote \' . $lote->num_lote;
+                $labels[] = 'Lote '.$lote->num_lote;
                 $data[] = round(($qtde / $totalMortes) * 100, 2);
             }
         }
 
-        return view(\'dashboard.grafico-mortes\', compact(\'labels\', \'data\'));
+        return view('dashboard.grafico-mortes', ['labels' => $labels, 'data' => $data]);
     }
 
     public function index()
     {
+        $this->authorize('viewAny', Morte::class);
+
         $dados = [
-            \'mortes\' => Morte::with([\'lote\'])->select(\'*\')->orderBy(\'semana\', \'desc\')->orderBy(\'data_morte\', \'desc\')->get(),
-            \'lotes\'  => Lote::select(\'*\')->get(),
+            'mortes' => Morte::with(['lote'])->select('*')->orderBy('semana', 'desc')->orderBy('data_morte', 'desc')->get(),
+            'lotes' => Lote::select('*')->get(),
         ];
 
-        return view(\'mortes.listar\', compact(\'dados\'));
+        return view('mortes.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
+        $this->authorize('create', Morte::class);
+
         $dados = [
-            \'lotes\' => Lote::all()
+            'lotes' => Lote::all(),
         ];
 
-        return view(\'mortes.adicionar\', compact(\'dados\'));
+        return view('mortes.adicionar', ['dados' => $dados]);
     }
 
-    public function store(Request $request)
+    public function store(StoreMorteRequest $request)
     {
-        $request->validate([
-            \'lote\' => \'required|exists:lotes,id\',
-            \'data_morte\' => [
-                \'required\',
-                Rule::unique(\'mortes\', \'data_morte\')->where(function ($query) use ($request) {
-                    return $query->where(\'lote_id\', $request->lote);
-                })
-            ],
-            \'qtde_mortes\' => \'required|numeric|min:1\'
-        ]);
+        $this->authorize('create', Morte::class);
 
-        $main = new MainController();
+        $main = new MainController;
 
-        $morte = new Morte();
+        $morte = new Morte;
         $morte->lote_id = $request->lote;
 
         $lote = Lote::find($request->lote);
@@ -97,56 +86,63 @@ class MortesController extends Controller
 
         $morte->save();
 
-        return redirect()->route(\'mortes.index\')->with(\'success\', \'Gravado com sucesso!!!\');
+        return redirect()->route('mortes.index')->with('success', 'Gravado com sucesso!!!');
     }
 
     public function show($id)
     {
+        $morte = Morte::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $morte);
+
         $dados = [
-            \'morte\' => Morte::findOrFail(Crypt::decryptString($id))
+            'morte' => $morte,
         ];
 
-        return view(\'mortes.detalhes\', compact(\'dados\'));
+        return view('mortes.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
+        $morte = Morte::findOrFail($id);
+        $this->authorize('update', $morte);
+
         $dados = [
-            \'morte\' => Morte::findOrFail($id)
+            'morte' => $morte,
         ];
 
-        return view(\'mortes.editar\', compact(\'dados\'));
+        return view('mortes.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateMorteRequest $request, Morte $morte)
     {
-        // $request->validate([
-        //     \'nome\' => \'required|min:3|max:30\'
-        // ]);
-
-        $morte = Morte::findOrFail($request->id);
+        $this->authorize('update', $morte);
 
         $morte->update([
-            \'nome\' => $request->nome
+            'nome' => $request->nome,
         ]);
 
-        return redirect()->route(\'mortes.index\')->with(\'success\', \'Gravado com sucesso!!!\');
+        return redirect()->route('mortes.index')->with('success', 'Gravado com sucesso!!!');
     }
 
     public function confirm($id)
     {
+        $morte = Morte::findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $morte);
+
         $dados = [
-            \'morte\' => Morte::findOrFail(Crypt::decryptString($id))
+            'morte' => $morte,
         ];
 
-        return view(\'mortes.confirmar\', compact(\'dados\'));
+        return view('mortes.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
     {
         $morte = Morte::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $morte);
+
         $morte->delete();
-        return redirect()->route(\'mortes.index\');
+
+        return redirect()->route('mortes.index');
     }
 }
-

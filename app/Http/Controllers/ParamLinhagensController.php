@@ -2,35 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreParamLinhagemRequest;
+use App\Http\Requests\UpdateParamLinhagemRequest;
 use App\Models\ParamLinhagem;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class ParamLinhagensController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', ParamLinhagem::class);
         $results = ParamLinhagem::all();
-        return view('parametros.linhagens.listar', compact('results'));
+
+        return view('parametros.linhagens.listar', ['results' => $results]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamLinhagem::class);
+
         return view('parametros.linhagens.adicionar');
     }
 
-    public function store(Request $request)
+    public function store(StoreParamLinhagemRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', ParamLinhagem::class);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $result = new ParamLinhagem();
+        $result = new ParamLinhagem;
         $result->descricao = $request->descricao;
         $result->save();
 
@@ -39,29 +42,26 @@ class ParamLinhagensController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $nucleo = ParamLinhagem::findOrFail(Crypt::decryptString($id));
-        return view('nucleos.detalhes', compact('nucleo'));    }
+        $this->authorize('view', $nucleo);
+
+        return view('nucleos.detalhes', ['nucleo' => $nucleo]);
+    }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $nucleo = ParamLinhagem::findOrFail(Crypt::decryptString($id));
-        return view('nucleos.editar', compact('nucleo'));
+        $this->authorize('update', $nucleo);
+
+        return view('nucleos.editar', ['nucleo' => $nucleo]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateParamLinhagemRequest $request, ParamLinhagem $paramLinhagem)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('update', $paramLinhagem);
 
-        $request->validate([
-            'descricao' => 'required|min:3|max:30'
-        ]);
-
-        $result = ParamLinhagem::findOrFail($request->id);
-
-        $result->update([
-            'descricao' => $request->descricao
+        $paramLinhagem->update([
+            'descricao' => $request->descricao,
         ]);
 
         return redirect()->route('param.linhagens.index')->with('success', 'Gravado com sucesso!!!');
@@ -69,16 +69,18 @@ class ParamLinhagensController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $result = ParamLinhagem::findOrFail(Crypt::decryptString($id));
-        return view('parametros.linhagens.confirmar', compact('result'));
+        $this->authorize('view', $result);
+
+        return view('parametros.linhagens.confirmar', ['result' => $result]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $result = ParamLinhagem::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $result);
         $result->delete();
+
         return redirect()->route('param.linhagens.index');
     }
 }

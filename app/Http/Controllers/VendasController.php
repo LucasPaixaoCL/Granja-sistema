@@ -2,55 +2,54 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreVendaRequest;
+use App\Http\Requests\UpdateVendaRequest;
 use App\Models\Cliente;
 use App\Models\FormaPgto;
 use App\Models\Formato;
 use App\Models\Funcionario;
 use App\Models\ParamSituacaoPagamento;
 use App\Models\Venda;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
 class VendasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('viewAny', Venda::class);
 
         $dados = [
-            'vendas' => Venda::with('cliente', 'funcionario', 'formato', 'forma_pgto', 'situacao')->orderBy('data_venda', 'desc')->get()
+            'vendas' => Venda::with('cliente', 'funcionario', 'formato', 'forma_pgto', 'situacao')->orderBy('data_venda', 'desc')->get(),
         ];
 
-        //dd($dados);
-
-        return view('vendas.listar', compact('dados'));
+        return view('vendas.listar', ['dados' => $dados]);
     }
 
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', Venda::class);
 
         $dados = [
             'clientes' => Cliente::orderBy('nome')->get(),
             'vendedores' => Funcionario::orderBy('nome')->get(),
             'formas_pgto' => FormaPgto::all(),
             'formatos' => Formato::all(),
-            'situacoes' => ParamSituacaoPagamento::all()
+            'situacoes' => ParamSituacaoPagamento::all(),
         ];
 
-        return view('vendas.adicionar', compact('dados'));
+        return view('vendas.adicionar', ['dados' => $dados]);
     }
 
-    public function store(Request $request)
+    public function store(StoreVendaRequest $request)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $this->authorize('create', Venda::class);
 
-        // $request->validate([
-        //     'data_venda' => 'required'
-        // ]);
-
-        $venda = new Venda();
+        $venda = new Venda;
         $venda->data_venda = $request->data_venda;
 
         $venda->formato_id = $request->formato;
@@ -65,7 +64,7 @@ class VendasController extends Controller
 
         $subtotal = $quantidade * $valor_unitario - $desconto;
 
-        if ((float)$subtotal != (float)$request->subtotal) {
+        if ($subtotal !== (float) $request->subtotal) {
             return back()->with('error', 'O subtotal informado não confere com o valor calculado.');
         }
 
@@ -86,9 +85,9 @@ class VendasController extends Controller
         $ovos_vendidos = 0;
 
         if ((int) $request->formato == 1) { // 1 = caixa e 2 = cartela
-            $ovos_vendidos = 360 * (int)$request->quantidade;
+            $ovos_vendidos = 360 * (int) $request->quantidade;
         } else {
-            $ovos_vendidos = 30 * (int)$request->quantidade; // 30 pode variar 
+            $ovos_vendidos = 30 * (int) $request->quantidade; // 30 pode variar
         }
 
         $venda->qtde_ovos = $ovos_vendidos;
@@ -100,34 +99,39 @@ class VendasController extends Controller
 
     public function show($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+        $venda = Venda::with('cliente', 'funcionario', 'forma_pgto')->findOrFail(Crypt::decryptString($id));
+        $this->authorize('view', $venda);
 
         $dados = [
-            'venda' => Venda::with('cliente', 'funcionario', 'forma_pgto')->findOrFail(Crypt::decryptString($id))
+            'venda' => $venda,
         ];
 
-        return view('vendas.detalhes', compact('dados'));
+        return view('vendas.detalhes', ['dados' => $dados]);
     }
 
     public function edit($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $venda = Venda::findOrFail(Crypt::decryptString($id));
-        return view('vendas.editar', compact('venda'));
+        $this->authorize('update', $venda);
+
+        $data_prevista = $venda->data_prevista;
+        $data_realizada = $venda->data_realizada;
+
+        $dados = [
+            'id' => $id,
+            'data_prevista' => $data_prevista,
+            'data_realizada' => $data_realizada,
+        ];
+
+        return view('vendas.editar', ['dados' => $dados]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateVendaRequest $request, Venda $venda)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
-        $request->validate([
-            'nome' => 'required|min:3|max:30'
-        ]);
-
-        $venda = Venda::findOrFail($request->id);
+        $this->authorize('update', $venda);
 
         $venda->update([
-            'nome' => $request->nome
+            'nome' => $request->nome,
         ]);
 
         return redirect()->route('vendas.index')->with('success', 'Gravado com sucesso!!!');
@@ -135,16 +139,22 @@ class VendasController extends Controller
 
     public function confirm($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $venda = Venda::findOrFail(Crypt::decryptString($id));
-        return view('vendas.confirmar', compact('venda'));
+        $this->authorize('view', $venda);
+
+        $dados = [
+            'venda' => $venda,
+        ];
+
+        return view('vendas.confirmar', ['dados' => $dados]);
     }
 
     public function destroy($id)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $venda = Venda::findOrFail(Crypt::decryptString($id));
+        $this->authorize('delete', $venda);
         $venda->delete();
+
         return redirect()->route('vendas.index');
     }
 }
