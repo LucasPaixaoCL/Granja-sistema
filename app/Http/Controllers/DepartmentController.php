@@ -10,12 +10,22 @@ use App\Http\Requests\UpdateDepartmentRequest;
 
 class DepartmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            if (!Auth::user()->can('admin')) {
+                abort(403, 'Você não tem permissão para acessar esta página!');
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         $departments = Department::orderBy('name', 'asc')->get();
         return view('department.departments', compact('departments'));
     }
@@ -25,7 +35,6 @@ class DepartmentController extends Controller
      */
     public function create()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
         return view('department.add-department');
     }
 
@@ -57,8 +66,6 @@ class DepartmentController extends Controller
      */
     public function edit(Department $department)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         if ($this->isDepartmentBlocked($department->id)) {
             return redirect()->route('departments.index')->with('error', 'Este departamento não pode ser editado.');
         }
@@ -88,8 +95,6 @@ class DepartmentController extends Controller
      */
     public function destroy(Department $department)
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
-
         if ($this->isDepartmentBlocked($department->id)) {
             return redirect()->route('departments.index')->with('error', 'Este departamento não pode ser excluído.');
         }

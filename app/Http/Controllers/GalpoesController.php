@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Galpao;
+use App\Http\Requests\StoreGalpaoRequest;
+use App\Http\Requests\UpdateGalpaoRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -34,11 +36,8 @@ class GalpoesController extends Controller
         return view(\'galpoes.adicionar\');
     }
 
-    public function store(Request $request)
+    public function store(StoreGalpaoRequest $request)
     {
-        $request->validate([
-            \'descricao\' => \'required|min:3|max:30\'
-        ]);
 
         $galpao = new Galpao();
         $galpao->descricao = $request->descricao;
@@ -50,55 +49,41 @@ class GalpoesController extends Controller
         return redirect()->route(\'galpoes.index\')->with(\'success\', \'Gravado com sucesso!!!\');
     }
 
-    public function show($id)
+    public function show(Galpao $galpao)
     {
         $dados = [
-            \'galpao\' => Galpao::findOrFail(Crypt::decryptString($id))
+            'galpao' => $galpao
         ];
 
         return view(\'galpoes.detalhes\', compact(\'dados\'));
     }
 
-    public function edit($id)
+    public function edit(Galpao $galpao)
     {
         $dados = [
-            \'galpao\' => Galpao::findOrFail(Crypt::decryptString($id))
+            'galpao' => $galpao
         ];
 
         return view(\'galpoes.editar\', compact(\'dados\'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateGalpaoRequest $request, Galpao $galpao)
     {
-        $request->validate([
-            \'descricao\' => \'required|min:3|max:30\'
-        ]);
 
-        $despesa = Galpao::findOrFail($request->id);
-
-        $despesa->update([
-            \'descricao\' => $request->descricao
+        $galpao->update([
+            'descricao' => $request->descricao,
+            'largura' => $request->largura,
+            'comprimento' => $request->comprimento,
+            'densidade' => $request->densidade
         ]);
 
         return redirect()->route(\'galpoes.index\')->with(\'success\', \'Gravado com sucesso!!!\');
     }
 
-    public function confirm($id)
+
+
+    public function destroy(Galpao $galpao)
     {
-        $galpaoId = Crypt::decryptString($id);
-
-        $dados = [
-            \'galpao\' => Galpao::findOrFail($galpaoId)
-        ];
-
-        return view(\'galpoes.confirmar\', compact(\'dados\'));
-    }
-
-    public function destroy($id)
-    {
-        $galpaoId = Crypt::decryptString($id);
-
-        $galpao = Galpao::findOrFail($galpaoId);
 
         if ($galpao->lotes()->exists()) {
             return back()->with(\'error\', \'Não é possível excluir este galpão pois há lotes associados a ele.\');

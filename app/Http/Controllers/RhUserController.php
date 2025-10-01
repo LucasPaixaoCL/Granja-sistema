@@ -14,12 +14,21 @@ use App\Http\Requests\UpdateRhUserRequest;
 
 class RhUserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware("auth");
+        $this->middleware(function ($request, $next) {
+            if (!Auth!");
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
         $colaborators = User::with("detail")->where("role", "rh")->orderBy("name", "asc")->get();
         return view("colaborators.rh-users", compact("colaborators"));
     }
@@ -29,7 +38,6 @@ class RhUserController extends Controller
      */
     public function create()
     {
-        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
         $departments = Department::all();
         return view("colaborators.add-rh-user", compact("departments"));
     }
@@ -84,7 +92,6 @@ class RhUserController extends Controller
      */
     public function edit(User $rh_user)
     {
-        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
         // O parâmetro de rota é "rh_user" devido ao model binding implícito e ao prefixo de rota "rh-users"
         // Certifique-se de que o usuário tem a role "rh"
         if ($rh_user->role !== "rh") {
@@ -117,8 +124,6 @@ class RhUserController extends Controller
      */
     public function destroy(User $rh_user)
     {
-        Auth::user()->can("admin") ?: abort(403, "Você não tem permissão para acessar esta página!");
-
         if ($rh_user->role !== "rh") {
             return redirect()->route("rh-users.index")->with("error", "Usuário não é um colaborador RH.");
         }

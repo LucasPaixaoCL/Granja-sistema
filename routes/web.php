@@ -76,8 +76,8 @@ Route::middleware("auth")->group(function () {
     });
 
     // Rotas de Departamentos
-    Route::resource("departments", DepartmentController::class)->except(["show"]); // show não existe no controller original
-    Route::delete("/departments/{department}/confirm", [DepartmentController::class, "destroy"])->name("departments.destroy"); // Mapeando a rota de confirmação para destroy
+        Route::resource("departments", DepartmentController::class)->except(["show"]);
+    
 
     // Rotas de Usuários RH
     Route::prefix("rh-users")->name("rh-users.")->group(function () {
