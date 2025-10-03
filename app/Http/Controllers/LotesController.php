@@ -7,9 +7,11 @@ use App\Models\Morte;
 use App\Models\Nucleo;
 use App\Models\ParamLinhagem;
 use App\Models\ParamProgramaVacinacao;
+use App\Http\Requests\StoreLoteRequest;
+use App\Http\Requests\UpdateLoteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
+
 
 class LotesController extends Controller
 {
@@ -53,26 +55,24 @@ class LotesController extends Controller
         return view('lotes.adicionar', ['dados' => $dados]);
     }
 
-    public function store(Request $request)
+    public function store(StoreLoteRequest $request)
     {
-        // $request->validate([
-        //     'nome' => 'required|min:3|max:30'
-        // ]);
-
         $lote = new Lote;
-        $lote->nucleo_id = $request->nucleo;
-        $lote->num_lote = $this->buscaMaiorLote($request->nucleo);
+        $lote->nucleo_id = $request->nucleo_id;
+        $lote->num_lote = $this->buscaMaiorLote($request->nucleo_id);
         $lote->data_lote = $request->data_lote;
         $lote->qtde_aves = $request->qtde_aves;
         $lote->qtde_machos = $request->qtde_machos;
+        $lote->param_programa_vacinacao_id = $request->param_programa_vacinacao_id;
+        $lote->param_linhagem_id = $request->param_linhagem_id;
         $lote->save();
 
         return redirect()->route('lotes.index')->with('success', 'Gravado com sucesso!!!');
     }
 
-    public function show($id)
+    public function show(Lote $lote)
     {
-        $lote = Lote::with('mortes', 'nucleo', 'coletas')->findOrFail(Crypt::decryptString($id));
+        $lote->load("mortes", "nucleo", "coletas");
 
         $main = new MainController;
 
@@ -84,44 +84,28 @@ class LotesController extends Controller
         return view('lotes.detalhes', ['dados' => $dados]);
     }
 
-    public function edit($id)
+    public function edit(Lote $lote)
     {
-        $lote = Lote::findOrFail(Crypt::decryptString($id));
 
         return view('lotes.editar', ['lote' => $lote]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateLoteRequest $request, Lote $lote)
     {
-        $validated = $request->validate([
-            'id' => 'required|exists:lotes,id',
-            'nome' => 'required|string|min:3|max:30',
-        ]);
-
-        $lote = Lote::select('id')->findOrFail($validated['id']);
-
-        $lote->update([
-            'nome' => $validated['nome'],
-        ]);
+        $lote->nucleo_id = $request->nucleo_id;
+        $lote->data_lote = $request->data_lote;
+        $lote->qtde_aves = $request->qtde_aves;
+        $lote->qtde_machos = $request->qtde_machos;
+        $lote->param_programa_vacinacao_id = $request->param_programa_vacinacao_id;
+        $lote->param_linhagem_id = $request->param_linhagem_id;
+        $lote->save();
 
         return redirect()->route('lotes.index')->with('success', 'Gravado com sucesso!!!');
     }
 
-    public function confirm($id)
+
+    public function destroy(Lote $lote)
     {
-        $decryptedId = Crypt::decryptString($id);
-
-        $dados = [
-            'lote' => Lote::select('id', 'qtde_aves', 'qtde_machos', 'data_entrada')
-                ->findOrFail($decryptedId),
-        ];
-
-        return view('lotes.confirmar', ['dados' => $dados]);
-    }
-
-    public function destroy($id)
-    {
-        $lote = Lote::findOrFail(Crypt::decryptString($id));
 
         if ($lote->mortes()->exists()) {
             return back()->with('error', 'Não é possível excluir este lote pois há mortes associadas a ele.');

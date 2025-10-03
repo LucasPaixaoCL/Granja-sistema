@@ -18,7 +18,8 @@ class RhUserController extends Controller
     {
         $this->middleware("auth");
         $this->middleware(function ($request, $next) {
-            if (!Auth!");
+            if (!Auth::user()->can("admin")) {
+                abort(403, "Você não tem permissão para acessar esta página!");
             }
             return $next($request);
         });
@@ -78,14 +79,6 @@ class RhUserController extends Controller
         return redirect()->route("rh-users.index")->with("success", "Colaborador criado com sucesso!");
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $rh_user)
-    {
-        // Este método não é usado na implementação original, mas pode ser implementado se necessário.
-        abort(404); // Ou redirecionar para a lista.
-    }
 
     /**
      * Show the form for editing the specified resource.

@@ -75,7 +75,7 @@ class NucleosController extends Controller
     {
 
         $dados = [
-            "id" => $nucleo->id,
+
             "nucleo" => $nucleo,
             "situacoes" => [
                 ["id" => 1, "descricao" => "Ativo"],

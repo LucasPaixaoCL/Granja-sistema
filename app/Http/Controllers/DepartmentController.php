@@ -51,15 +51,6 @@ class DepartmentController extends Controller
         return redirect()->route('departments.index')->with('success', 'Departamento criado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Department $department)
-    {
-        // Este método não é usado na implementação original, mas é parte do resource controller.
-        // Pode ser implementado se houver uma view de detalhes para um único departamento.
-        abort(404); // Ou redirecionar para a lista, ou implementar a view.
-    }
 
     /**
      * Show the form for editing the specified resource.

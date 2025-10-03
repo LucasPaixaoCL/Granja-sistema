@@ -13,7 +13,7 @@ class ClienteSeeder extends Seeder
         DB::table('clientes')->insert(
             [
                 [
-                    'descricao' => 'Ao Consumidor',
+                    'nome' => 'Ao Consumidor',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]

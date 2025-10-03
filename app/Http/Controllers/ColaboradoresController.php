@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
-class ColaboratorsController extends Controller
+class ColaboradoresController extends Controller
 {
     public function __construct()
     {

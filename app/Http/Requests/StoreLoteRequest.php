@@ -23,12 +23,12 @@ class StoreLoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nucleo' => 'required|exists:nucleos,id',
+            'nucleo_id' => 'required|exists:nucleos,id',
             'data_lote' => 'required|date',
             'qtde_aves' => 'required|integer|min:1',
             'qtde_machos' => 'required|integer|min:0|lte:qtde_aves',
-            'programa_vacinacao' => 'required|exists:param_programa_vacinacao,id',
-            'linhagem' => 'required|exists:param_linhagens,id',
+            'param_programa_vacinacao_id' => 'required|exists:param_programa_vacinacao,id',
+            'param_linhagem_id' => 'required|exists:param_linhagens,id',
         ];
     }
 
@@ -40,8 +40,8 @@ class StoreLoteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nucleo.required' => 'O núcleo é obrigatório.',
-            'nucleo.exists' => 'O núcleo selecionado não é válido.',
+            'nucleo_id.required' => 'O núcleo é obrigatório.',
+            'nucleo_id.exists' => 'O núcleo selecionado não é válido.',
             'data_lote.required' => 'A data do lote é obrigatória.',
             'data_lote.date' => 'A data do lote deve ser uma data válida.',
             'qtde_aves.required' => 'A quantidade de aves é obrigatória.',
@@ -51,10 +51,11 @@ class StoreLoteRequest extends FormRequest
             'qtde_machos.integer' => 'A quantidade de machos deve ser um número inteiro.',
             'qtde_machos.min' => 'A quantidade de machos deve ser no mínimo 0.',
             'qtde_machos.lte' => 'A quantidade de machos não pode ser maior que a quantidade de aves.',
-            'programa_vacinacao.required' => 'O programa de vacinação é obrigatório.',
-            'programa_vacinacao.exists' => 'O programa de vacinação selecionado não é válido.',
-            'linhagem.required' => 'A linhagem é obrigatória.',
-            'linhagem.exists' => 'A linhagem selecionada não é válida.',
+            'param_programa_vacinacao_id.required' => 'O programa de vacinação é obrigatório.',
+            'param_programa_vacinacao_id.exists' => 'O programa de vacinação selecionado não é válido.',
+            'param_linhagem_id.required' => 'A linhagem é obrigatória.',
+            'param_linhagem_id.exists' => 'A linhagem selecionada não é válida.',
         ];
     }
 }
+

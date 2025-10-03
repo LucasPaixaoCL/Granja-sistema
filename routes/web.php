@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClientesController;
-use App\Http\Controllers\ColaboratorsController;
+use App\Http\Controllers\ColaboradoresController;
 use App\Http\Controllers\ColetasController;
 use App\Http\Controllers\ConfirmAccountController;
 use App\Http\Controllers\ControlePesoController;
@@ -12,7 +12,7 @@ use App\Http\Controllers\DescartesController;
 use App\Http\Controllers\DespesasController;
 use App\Http\Controllers\FormasPgtoController;
 use App\Http\Controllers\FormatosController;
-use App\Http\Controllers\ForncedoresController;
+use App\Http\Controllers\FornecedoresController;
 use App\Http\Controllers\FuncionariosController;
 use App\Http\Controllers\GalpoesController;
 use App\Http\Controllers\LotesController;
@@ -69,10 +69,10 @@ Route::middleware("auth")->group(function () {
     });
 
     // Rotas de Colaboradores (Admin)
-    Route::prefix("colaborators")->name("colaborators.")->group(function () {
-        Route::get("/all", [ColaboratorsController::class, "index"])->name("all");
-        Route::get("/details/{id}", [ColaboratorsController::class, "details"])->name("details");
-        Route::delete("/delete/{id}", [ColaboratorsController::class, "destroy"])->name("destroy"); // Usando DELETE para exclusão
+    Route::prefix("colaboradores")->name("colaboradores.")->group(function () {
+        Route::get("/all", [ColaboradoresController::class, "index"])->name("all");
+        Route::get("/details/{id}", [ColaboradoresController::class, "details"])->name("details");
+        Route::delete("/delete/{id}", [ColaboradoresController::class, "destroy"])->name("destroy"); // Usando DELETE para exclusão
     });
 
     // Rotas de Departamentos
@@ -103,7 +103,7 @@ Route::middleware("auth")->group(function () {
         "pesos" => ControlePesoController::class,
         "clientes" => ClientesController::class,
         "funcionarios" => FuncionariosController::class,
-        "fornecedores" => ForncedoresController::class,
+        "fornecedores" => FornecedoresController::class,
         "formas_pgto" => FormasPgtoController::class,
         "formatos" => FormatosController::class,
         "despesas" => DespesasController::class,

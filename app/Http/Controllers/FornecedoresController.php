@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 
-class ForncedoresController extends Controller
+class FornecedoresController extends Controller
 {
     public function __construct()
     {
