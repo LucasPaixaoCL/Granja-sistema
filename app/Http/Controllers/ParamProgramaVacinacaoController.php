@@ -8,12 +8,14 @@ use App\Models\ParamProgramaVacinacao;
 use App\Models\ParamViaAplicacao;
 use Illuminate\Support\Facades\Crypt;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+
 class ParamProgramaVacinacaoController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
 
     public function index()
     {
@@ -46,7 +48,7 @@ class ParamProgramaVacinacaoController extends Controller
         $plano_vacinacao->descricao = $request->descricao;
         $plano_vacinacao->save();
 
-        return redirect()->route('param.programa.vacinacao.index')->with('success', 'Gravado com sucesso!!!');
+        return redirect()->route('parametros.programa_vacinacao.index')->with('success', 'Gravado com sucesso!!!');
     }
 
     public function show($id)
@@ -81,7 +83,7 @@ class ParamProgramaVacinacaoController extends Controller
             'descricao' => $request->descricao,
         ]);
 
-        return redirect()->route('param.programa.vacinacao.index')->with('success', 'Gravado com sucesso!!!');
+        return redirect()->route('parametros.programa_vacinacao.index')->with('success', 'Gravado com sucesso!!!');
     }
 
     public function confirm($id)
@@ -102,7 +104,7 @@ class ParamProgramaVacinacaoController extends Controller
         $this->authorize('delete', $plano_vacinacao);
         $plano_vacinacao->delete();
 
-        return redirect()->route('param.programa.vacinacao.index');
+        return redirect()->route('parametros.programa_vacinacao.index');
     }
 
     protected function getParamViaAplicacao()

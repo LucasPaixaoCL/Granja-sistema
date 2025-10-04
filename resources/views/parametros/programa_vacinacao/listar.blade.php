@@ -18,11 +18,11 @@
                     @if ($dados['programa_vacinacao']->count() === 0)
                         <div class="text-left">
                             <p class="mb-3">Nenhum registro encontrado!</p>
-                            <a href="{{ route('param.programa.vacinacao.create') }}" class="btn btn-primary">Adicionar</a>
+                            <a href="{{ route('parametros.programa_vacinacao.create') }}" class="btn btn-primary">Adicionar</a>
                         </div>
                     @else
                         <div class="text-right mb-2">
-                            <a href="{{ route('param.programa.vacinacao.create') }}"
+                            <a href="{{ route('parametros.programa_vacinacao.create') }}"
                                 class="btn btn-primary">Adicionar</a>
                         </div>
 
@@ -38,19 +38,17 @@
                                     <tr>
                                         <td style="text-align: center">{{ $programa->id }}</td>
                                         <td><a
-                                                href="{{ route('param.detalhe.programa.vacinacao.index') }}">{{ $programa->descricao }}</a>
+                                                href="{{ route('parametros.detalhe_programa_vacinacao.index') }}">{{ $programa->descricao }}</a>
                                         </td>
-                                        <td>
+<td>
                                             <div class="d-flex gap-2 justify-content-end">
 
-                                                <a href="{{ route('param.programa.vacinacao.show', ['id' => Crypt::encryptString($programa->id)]) }}"
+                                                <a href="{{ route('parametros.programa_vacinacao.show', ['programa_vacinacao' => Crypt::encryptString($programa->id)]) }}"
                                                     class="btn btn-sm"><i class="fa-regular fa-eye"></i></a>
-                                                <a href="{{ route('param.programa.vacinacao.edit', ['id' => Crypt::encryptString($programa->id)]) }}"
+                                                <a href="{{ route('parametros.programa_vacinacao.edit', ['programa_vacinacao' => Crypt::encryptString($programa->id)]) }}"
                                                     class="btn btn-sm"><i class="fa-regular fa-pen-to-square"></i></a>
-                                                <a href="{{ route('param.programa.vacinacao.confirm', ['id' => Crypt::encryptString($programa->id)]) }}"
-                                                    class="btn btn-sm"><i class="fa-regular fa-trash-can"></i></a>
-
-                                            </div>
+                                  <a href="{{ route('parametros.programa_vacinacao.confirm', ['programa_vacinacao' => Crypt::encryptString($programa->id)]) }}" class="btn btn-sm"><i class="fa-regular fa-trash-can"></i></a>
+                                                </div>
                                         </td>
                                     </tr>
                                 @endforeach

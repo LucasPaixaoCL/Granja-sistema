@@ -14,7 +14,7 @@
             <div class="card-body">
             </div>
             <div class="card-footer">
-                <a href="{{ route('param.programa.vacinacao.index') }}" class="btn btn-outline-danger me-3">Cancelar</a>
+                <a href="{{route('parametros.programa_vacinacao.index')}}" class="btn btn-outline-danger me-3">Cancelar</a>
             </div>
         </div>
     </div>

@@ -6,7 +6,7 @@
 
     <x-breadcrumb :page=$page />
 
-    <form action="{{ route('param.programa.vacinacao.store') }}" method="post">
+    <form action="{{ route('parametros.programa_vacinacao.store') }}" method="post">
         @csrf
 
         <div class="grid grid-cols-12 gap-x-6">
@@ -26,7 +26,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="{{ route('param.programa.vacinacao.index') }}"
+                        <a href="{{ route('parametros.programa_vacinacao.index') }}"
                             class="btn btn-outline-danger me-3">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Gravar</button>
                     </div>

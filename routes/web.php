@@ -19,8 +19,8 @@ use App\Http\Controllers\LotesController;
 use App\Http\Controllers\MortesController;
 use App\Http\Controllers\NucleosController;
 use App\Http\Controllers\ParamCategoriaDespesaController;
-use App\Http\Controllers\ParamConsumoAguaController;
 use App\Http\Controllers\ParamConsumoRacaoController;
+use App\Http\Controllers\ParamConsumoAguaController;
 use App\Http\Controllers\ParamControlePesoController;
 use App\Http\Controllers\ParamDetalheProgramaVacinacaoController;
 use App\Http\Controllers\ParamFaseAveController;
@@ -35,6 +35,7 @@ use App\Http\Controllers\RhManagementController;
 use App\Http\Controllers\RhUserController;
 use App\Http\Controllers\VacinasController;
 use App\Http\Controllers\VendasController;
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -113,8 +114,8 @@ Route::middleware("auth")->group(function () {
     // Rotas para Parâmetros (agrupadas)
     Route::prefix("parametros")->name("parametros.")->group(function () {
         Route::resource("categoria_despesa", ParamCategoriaDespesaController::class);
-        Route::resource("consumo_agua", ParamConsumoAguaController::class);
         Route::resource("consumo_racao", ParamConsumoRacaoController::class);
+        Route::resource("consumo_agua", ParamConsumoAguaController::class);
         Route::resource("controle_peso", ParamControlePesoController::class);
         Route::resource("detalhe_programa_vacinacao", ParamDetalheProgramaVacinacaoController::class);
         Route::resource("fases_ave", ParamFaseAveController::class);
@@ -123,9 +124,14 @@ Route::middleware("auth")->group(function () {
         Route::resource("natureza_despesa", ParamNaturezaDespesaController::class);
         Route::resource("programa_luz", ParamProgramaLuzController::class);
         Route::resource("programa_vacinacao", ParamProgramaVacinacaoController::class);
+        Route::get("programa_vacinacao", [ParamProgramaVacinacaoController::class, "index"])->name("programa_vacinacao.index");
+        Route::get("programa_vacinacao/{programa_vacinacao}/confirm", [ParamProgramaVacinacaoController::class, "confirm"])->name("programa_vacinacao.confirm");
         Route::resource("tipo_despesa", ParamTipoDespesaController::class);
         // A rota ParamVacinaController não foi encontrada no arquivo original, mas foi incluída para consistência se existir.
         // Route::resource("vacina", ParamVacinaController::class);
     });
 });
+
+
+
 

@@ -12,7 +12,7 @@ class DashboardsController extends Controller
 {
     public function dashboard()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+
         $dados = [
             'result' => $this->qtdeOvosProduzidos()
         ];
@@ -21,7 +21,7 @@ class DashboardsController extends Controller
 
     private function qtdeOvosProduzidos()
     {
-        Auth::user()->can('admin') ?: abort(403, 'Você não tem permissão para acessar esta página!');
+
         $totalOvos = ColetaOvo::sum('qtde_ovos');
         $totalAves = Lote::sum('qtde_aves');
         $percentualProducao = $totalAves > 0 ? ($totalOvos / $totalAves) * 100 : 0;

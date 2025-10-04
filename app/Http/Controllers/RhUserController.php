@@ -62,7 +62,7 @@ class RhUserController extends Controller
         $user->confirmation_token = $token;
         $user->role = "rh";
         $user->department_id = $request->select_department;
-        $user->permissions = "["rh"]";
+        $user->permissions = json_encode(["rh"]);
         $user->save();
 
         $user->detail()->create([

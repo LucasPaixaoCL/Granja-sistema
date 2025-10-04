@@ -28,9 +28,8 @@
                 </div>
 
                 <div class="card-footer">
-                    <a href="{{ route('param.programa.vacinacao.index') }}" class="btn btn-secondary px-5">Não</a>
-                    <a href="{{ route('param.programa.vacinacao.destroy', ['id' => Crypt::encryptString($dados['plano_vacinacao']->id)]) }}"
-                        class="btn btn-danger px-5">Sim</a>
+                    <a href="{{route('parametros.programa_vacinacao.index')}}" class="btn btn-secondary px-5">Não</a>
+                    <a href="{{ route('parametros.programa_vacinacao.destroy', ['programa_vacinacao' => Crypt::encryptString($dados['plano_vacinacao']->id)]) }}" class="btn btn-danger px-5">Sim</a>
                 </div>
 
             </div>

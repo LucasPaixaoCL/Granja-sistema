@@ -21,6 +21,7 @@ class AdminController extends Controller
 
     public function index()
     {
-        return view(\'home\', compact(\'data\'));
+        return view("home");
     }
 }
+

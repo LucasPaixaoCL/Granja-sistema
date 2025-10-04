@@ -56,7 +56,7 @@
                         <i data-feather="settings"></i>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end pc-h-dropdown">
-                        <a href="{{ route('user.profile') }}" class="dropdown-item">
+                        <a href="{{route('user.profile.index')}}" class="dropdown-item">
                             <i class="ti ti-user"></i>
                             <span>Minha Conta</span>
                         </a>

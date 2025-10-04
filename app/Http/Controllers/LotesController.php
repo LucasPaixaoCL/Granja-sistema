@@ -74,11 +74,9 @@ class LotesController extends Controller
     {
         $lote->load("mortes", "nucleo", "coletas");
 
-        $main = new MainController;
-
         $dados = [
             'lote' => $lote,
-            'semana' => $main->calcularSemana($lote->data_lote, now()),
+            'semana' => MainController::calcularSemana($lote->data_lote, now()),
         ];
 
         return view('lotes.detalhes', ['dados' => $dados]);

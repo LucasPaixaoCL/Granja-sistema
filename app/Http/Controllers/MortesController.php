@@ -70,8 +70,6 @@ class MortesController extends Controller
     {
         $this->authorize('create', Morte::class);
 
-        $main = new MainController;
-
         $morte = new Morte;
         $morte->lote_id = $request->lote;
 
@@ -79,7 +77,7 @@ class MortesController extends Controller
         $data_inicial = $lote->data_lote;
         $data_final = $request->data_morte;
 
-        $morte->semana = $main->calcularSemana($data_inicial, $data_final) + 1;
+        $morte->semana = MainController::calcularSemana($data_inicial, $data_final) + 1;
 
         $morte->data_morte = $request->data_morte;
         $morte->qtde_mortes = $request->qtde_mortes;
